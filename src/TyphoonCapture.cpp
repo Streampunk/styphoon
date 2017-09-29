@@ -11,6 +11,7 @@
 #include"TyphoonCapture.h"
 #include"TyphoonRegister.h"
 #include"TyphoonTypeMaps.h"
+#include"BufferStatus.h"
 #include <assert.h>
 using namespace std;
 
@@ -96,7 +97,16 @@ TyphoonCapture::TyphoonCapture(UINT boardId, ULONG channelId, ChannelConfig& con
 
 TyphoonCapture::AVBuffer* TyphoonCapture::LockNextFrame(uint32_t timeoutMs)
 {
-    bool locked = captureBuffer_.LockBufferForRead(currentFrame.videoBuffer, currentFrame.videoBufferSize, timeoutMs);
+    size_t&         bufferSize = currentFrame.videoBufferSize;
+    unsigned char*& buffer     = currentFrame.videoBuffer;
+
+    if(config_.CompressedVideo)
+    {
+        bufferSize = currentFrame.dataBufferSize;
+        buffer     = currentFrame.dataBuffer;
+    }
+
+    bool locked = captureBuffer_.LockBufferForRead(buffer, bufferSize, timeoutMs);
 
     if(locked)
     {
@@ -359,13 +369,23 @@ bool TyphoonCapture::ForwardNextFrame()
     if (result)
     {
         unsigned char* frameBuffer = nullptr;
+        uint32_t freeBuffers = 0;
 
-        result = captureBuffer_.LockBufferForWrite(frameBuffer, frameItem.VideoBufferSize, 10);
+        ULONG bufferSize = frameItem.VideoBufferSize;
+        PVOID64 buffer = frameItem.pBufferVideo;
+
+        if(config_.CompressedVideo)
+        {
+            bufferSize = frameItem.DataBufferSize;
+            buffer = frameItem.pBufferData;
+        }
+
+        result = captureBuffer_.LockBufferForWrite(frameBuffer, bufferSize, 10);
 
         if(result)
         {
-            memcpy_s(frameBuffer, frameItem.VideoBufferSize, frameItem.pBufferVideo, frameItem.VideoBufferSize);
-            captureBuffer_.ReleaseBufferFromWrite();
+            memcpy_s(frameBuffer, frameItem.VideoBufferSize, buffer, bufferSize);
+            captureBuffer_.ReleaseBufferFromWrite(&freeBuffers);
         }
         else
         {
@@ -375,9 +395,22 @@ bool TyphoonCapture::ForwardNextFrame()
         channel_->ReleaseFrame(&frameItem);
 
         frameCallback_(frameCallbackContext_);
+
+        if(result)
+        {
+            LogBufferState(freeBuffers);
+        }
     }
 
     return result;
+}
+
+
+void TyphoonCapture::LogBufferState(uint32_t freeBuffers)
+{
+    float usedCircBufferPercent = (float)(freeBuffers * 100) / (float)CaptureBufferSize;
+
+    BufferStatus::AddSample(BufferStatus::CaptureCircBuffer, usedCircBufferPercent);
 }
 
 

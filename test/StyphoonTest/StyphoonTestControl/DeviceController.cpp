@@ -33,9 +33,9 @@ bool DeviceController::StartCapture()
         TRACE("Initializing Capture...");
 
 //        TyphoonCapture::ChannelConfig config(TPH_FORMAT_1080i_5000, TPH_V210, TPH_SOURCE_SDI);
-        TyphoonCapture::ChannelConfig config(0x00000004, TPH_V210, TPH_SOURCE_SDI);
+        TyphoonCapture::ChannelConfig config(0x00000004, TPH_V210, TPH_SOURCE_SDI, false);
 
-        capture.reset(TyphoonCapture::Create(0, 2, config, DeviceController::FrameArrivedCallback, this));
+        capture.reset(TyphoonCapture::Create(0, 0, config, DeviceController::FrameArrivedCallback, this));
 
         if(capture)
         {

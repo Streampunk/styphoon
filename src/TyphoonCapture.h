@@ -52,6 +52,8 @@ public:
         size_t videoBufferSize = 0;
         unsigned char* audioBuffer  = nullptr;
         size_t audioBufferSize = 0;
+        unsigned char* dataBuffer  = nullptr;
+        size_t dataBufferSize = 0;
     };
 
 public:
@@ -80,6 +82,8 @@ private:
     void CaptureThreadProc();
     void RunFrameAcquisitionLoop();
     bool ForwardNextFrame();
+
+    void LogBufferState(uint32_t freeBuffers);
 
     FrameCallback frameCallback_;
     void* frameCallbackContext_;

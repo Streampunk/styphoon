@@ -87,6 +87,6 @@ typedef TypeMap<ULONG, ULONG> TyphoonModeGetSetTranslationMap;
 extern const TyphoonDisplayModeMap TPH_DISPLAY_MODE_MAP;
 extern const TyphoonModeGetSetTranslationMap TPH_DISPLAY_MODE_TRANSLATION_MAP;
 
-//typedef TypeMap<GenericPixelFormat, NTV2FrameBufferFormat> PixelFormatMap;
+typedef TypeMap<GenericPixelFormat, ULONG> TyphoonPixelFormatMap;
 
-//extern const PixelFormatMap PIXEL_FORMAT_MAP;
+extern const TyphoonPixelFormatMap TPH_PIXEL_FORMAT_MAP;

@@ -34,7 +34,7 @@ namespace streampunk {
 class Capture : public Nan::ObjectWrap
 {
 private:
-  explicit Capture(uint32_t deviceIndex = 0, uint32_t displayMode = 0, uint32_t pixelFormat = 0);
+  explicit Capture(uint32_t deviceIndex = 0, uint32_t channelIndex = 0, uint32_t pixelFormat = 0, uint32_t inputSource = TPH_SOURCE_SDI, bool compressed = false);
   ~Capture();
 
   static NAN_METHOD(New);
@@ -75,16 +75,13 @@ private:
   static NAUV_WORK_CB(FrameCallback);
 
   uint32_t deviceIndex_;
-  uint32_t displayMode_;
+  uint32_t channelIndex_;
   uint32_t genericPixelFormat_;
-  //uint32_t width_;
-  //uint32_t height_;
+  uint32_t inputSource_; 
+  bool compressed_;
   bool audioEnabled_;
 
-  // uint32_t sampleByteFactor_;
   Nan::Persistent<v8::Function> captureCB_;
-  // IDeckLinkVideoInputFrame* latestFrame_;
-  // IDeckLinkAudioInputPacket* latestAudio_;
 
   std::unique_ptr<TyphoonCapture> capture_;
 

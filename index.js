@@ -30,13 +30,23 @@ const EventEmitter = require('events');
 // var SegfaultHandler = require('../node-segfault-handler');
 // SegfaultHandler.registerHandler("crash.log");
 
-function Capture (deviceIndex, displayMode, pixelFormat) {
-  if (arguments.length !== 3 || typeof deviceIndex !== 'number' ||
-      typeof displayMode !== 'number' || typeof pixelFormat !== 'number' ) {
-    this.emit('error', new Error('Capture requires three number arguments: ' +
-      'index, display mode and pixel format'));
+function Capture (deviceIndex, channelIndex, pixelFormat, inputSource, compressed) {
+  if (arguments.length !== 5 || typeof deviceIndex !== 'number' ||
+      typeof channelIndex !== 'number' || typeof pixelFormat !== 'number'  || typeof inputSource !== 'number'  || typeof compressed !== 'boolean' ) {
+      console.error(
+        "Incorrect capture params" +
+        " Args = " + arguments.length +
+        " deviceIndex (" + typeof deviceIndex + ") = " + deviceIndex +
+        " channelIndex (" + typeof channelIndex + ") = " + channelIndex + 
+        " pixelFormat (" + typeof pixelFormat + ") = " + pixelFormat +
+        " inputSource (" + typeof inputSource + ") = " + inputSource +
+        " compressed (" + typeof compressed + ") = " + compressed
+        );
+
+    this.emit('error', new Error('Capture requires five number arguments: ' +
+      'Device Index, Channel Index, Pixel Format, Input Source and IsCompressed'));
   } else {
-    this.capture = new native.Capture(deviceIndex, displayMode, pixelFormat);
+      this.capture = new native.Capture(deviceIndex, channelIndex, pixelFormat, inputSource, compressed);
   }
   this.initialised = false;
   EventEmitter.call(this);

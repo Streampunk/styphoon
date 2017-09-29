@@ -19,7 +19,8 @@ public:
         writeLocked_(false),
         lastWrittenIdx_(-1),
         nextWriteIdx_(-1),
-        readIdx_(-1)
+        readIdx_(-1),
+        freeBuffers_(_Size)
     {}
 
     bool LockBufferForWrite(unsigned char*& buffer, size_t requiredBufferSize, uint32_t waitTimeoutMs)
@@ -41,6 +42,7 @@ public:
             if(nextWriteIdx_ != readIdx_)
             {
                 writeLocked_ = true;
+                freeBuffers_--;
                 locked = true;
 
                 std::vector<unsigned char>& writeBuffer = buffers_[nextWriteIdx_];
@@ -57,7 +59,7 @@ public:
         return locked;
     }
 
-    void ReleaseBufferFromWrite()
+    void ReleaseBufferFromWrite(uint32_t* freeBufferCount = nullptr)
     {
         std::unique_lock<std::mutex> lock(protectBuffers_);
 
@@ -67,6 +69,11 @@ public:
             lastWrittenIdx_ = nextWriteIdx_;
             lock.unlock();
             bufferToRead_.notify_one();
+        }
+
+        if(freeBufferCount)
+        {
+            *freeBufferCount = freeBuffers_;
         }
     }
 
@@ -104,13 +111,19 @@ public:
         return locked;
     }
 
-    void ReleaseBufferFromRead()
+    void ReleaseBufferFromRead(uint32_t* freeBufferCount = nullptr)
     {
         std::unique_lock<std::mutex> lock(protectBuffers_);
 
         if(readLocked_ == true)
         {
             readLocked_ = false;
+            freeBuffers_++;
+        }
+
+        if(freeBufferCount)
+        {
+            *freeBufferCount = freeBuffers_;
         }
     }
 
@@ -123,6 +136,8 @@ private:
 
     uint32_t readIdx_;
     bool readLocked_;
+
+    uint32_t freeBuffers_;
 
     std::array<std::vector<unsigned char>, _Size> buffers_;
     std::mutex protectBuffers_;

@@ -45,3 +45,10 @@ TyphoonModeGetSetTranslationMap::Entry _getSetTranslationMap[] =
 
 const TyphoonModeGetSetTranslationMap TPH_DISPLAY_MODE_TRANSLATION_MAP(_getSetTranslationMap, TPH_FORMAT_UNKNOWN, TPH_FORMAT_UNKNOWN);
 
+TyphoonPixelFormatMap::Entry _pixelFormatMap[] =
+{
+    { bmdFormat8BitYUV,   TPH_UYVY },
+    { bmdFormat10BitYUV, TPH_V210 }
+};
+
+const TyphoonPixelFormatMap TPH_PIXEL_FORMAT_MAP(_pixelFormatMap, bmdFormat10BitYUV, TPH_V210);

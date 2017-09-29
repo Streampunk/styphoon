@@ -28,10 +28,12 @@ inline Nan::Persistent<v8::Function> &Capture::constructor() {
   return myConstructor;
 }
 
-Capture::Capture(uint32_t deviceIndex, uint32_t displayMode, uint32_t pixelFormat) 
+Capture::Capture(uint32_t deviceIndex, uint32_t channelIndex, uint32_t pixelFormat, uint32_t inputSource, bool compressed) 
 : deviceIndex_(deviceIndex),
-  displayMode_(displayMode), 
+  channelIndex_(channelIndex), 
   genericPixelFormat_(pixelFormat),
+  inputSource_(inputSource),
+  compressed_(compressed),
   audioEnabled_(false)
   //genericPixelFormat_;
   //nativePixelFormat_
@@ -73,15 +75,18 @@ NAN_METHOD(Capture::New) {
   if (info.IsConstructCall()) {
     // Invoked as constructor: `new Capture(...)`
     uint32_t deviceIndex = info[0]->IsUndefined() ? 0 : Nan::To<uint32_t>(info[0]).FromJust();
-    uint32_t displayMode = info[1]->IsUndefined() ? 0 : Nan::To<uint32_t>(info[1]).FromJust();
+    uint32_t channelIndex = info[1]->IsUndefined() ? 0 : Nan::To<uint32_t>(info[1]).FromJust();
     uint32_t pixelFormat = info[2]->IsUndefined() ? 0 : Nan::To<uint32_t>(info[2]).FromJust();
-    Capture* obj = new Capture(deviceIndex, displayMode, pixelFormat);
+    uint32_t inputSource = info[3]->IsUndefined() ? 0 : Nan::To<uint32_t>(info[3]).FromJust();
+    bool compressed = info[4]->IsUndefined() ? 0 : Nan::To<bool>(info[4]).FromJust();
+
+    Capture* obj = new Capture(deviceIndex, channelIndex, pixelFormat, inputSource, compressed);
     obj->Wrap(info.This());
     info.GetReturnValue().Set(info.This());
   } else {
     // Invoked as plain function `Capture(...)`, turn into construct call.
-    const int argc = 3;
-    v8::Local<v8::Value> argv[argc] = { info[0], info[1], info[2] };
+    const int argc = 5;
+    v8::Local<v8::Value> argv[argc] = { info[0], info[1], info[2], info[3], info[4] };
     v8::Local<v8::Function> cons = Nan::New(constructor());
     info.GetReturnValue().Set(Nan::NewInstance(cons, argc, argv).ToLocalChecked());
   }
@@ -206,10 +211,16 @@ bool Capture::initCapture()
 {
     bool  success(false);
 
-    TyphoonCapture::ChannelConfig config(TPH_FORMAT_1080i_5994, TPH_V210, TPH_SOURCE_SDI);
+    ULONG typhoonPixelFormat = TPH_PIXEL_FORMAT_MAP.ToB(static_cast<GenericPixelFormat>(genericPixelFormat_));
+
+    TyphoonCapture::ChannelConfig config(
+        TPH_FORMAT_1080i_5994, 
+        typhoonPixelFormat, 
+        inputSource_,
+        compressed_);
 
     // Instantiate the TyphoonCapture object, using the specified Typhoon device...
-    capture_.reset(TyphoonCapture::Create(0, 2, config, Capture::_frameArrived, this));
+    capture_.reset(TyphoonCapture::Create(deviceIndex_, channelIndex_, config, Capture::_frameArrived, this));
 
     if (!capture_)
     {
@@ -289,7 +300,11 @@ NAUV_WORK_CB(Capture::FrameCallback) {
 
   if (nextFrame != nullptr)
   {
-    if (nextFrame->videoBuffer != nullptr)
+    if(capture->compressed_ && nextFrame->dataBuffer != nullptr)
+    {
+        bv = Nan::CopyBuffer(reinterpret_cast<char*>(nextFrame->dataBuffer), static_cast<uint32_t>(nextFrame->dataBufferSize)).ToLocalChecked();
+    }
+    else if ((!capture->compressed_) && nextFrame->videoBuffer != nullptr)
     {
         bv = Nan::CopyBuffer(reinterpret_cast<char*>(nextFrame->videoBuffer), static_cast<uint32_t>(nextFrame->videoBufferSize)).ToLocalChecked();
     }
