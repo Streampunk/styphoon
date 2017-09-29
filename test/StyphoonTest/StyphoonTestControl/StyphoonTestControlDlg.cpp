@@ -275,5 +275,5 @@ void CStyphoonTestControlDlg::OnBnClickedCheck1()
 {
     UpdateData();
 
-    control.CaptureToPlaybackRouting((bool) routeFrames);
+    control.CaptureToPlaybackRouting(static_cast<bool>(routeFrames));
 }

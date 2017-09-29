@@ -10,16 +10,7 @@
 
 #include"TyphoonCapture.h"
 #include"TyphoonRegister.h"
-//#include <Windows.h>
-//#include <Ws2tcpip.h>
-//#include <Winsock2.h>
-//#include <process.h>
-//#include <initguid.h>
-//#include <stdio.h>
-//#include <fstream> 
-//#include <string>
-//#include <iostream>
-//#include <conio.h>
+#include"TyphoonTypeMaps.h"
 #include <assert.h>
 using namespace std;
 
@@ -161,8 +152,30 @@ bool TyphoonCapture::Initialize()
             channel_ = board_->GetChannel(channelId_);
 
             ULONG format = TyphoonRegister::Read(*board_, TyphoonRegister::InputFormat, channelId_);
+            ULONG design = TyphoonRegister::GetDesign(*board_);
 
-            success = true;
+            // Try to determine the incoming signal standard in a form that can be used to open the channel.
+            // If this isn't possible, use the default as specified during construction
+            ULONG incomingSignalStandard = TPH_DISPLAY_MODE_TRANSLATION_MAP.ToB(format);
+
+            if(incomingSignalStandard != TPH_FORMAT_UNKNOWN)
+            {
+                printf("Setting signal standard to (%d)\n", incomingSignalStandard);
+                config_.SignalStandard = incomingSignalStandard;
+            }
+            else
+            {
+                printf("Incoming signal type (%d) not recognised, defaulting to (%d)\n", format, config_.SignalStandard);
+            }
+
+            if(design != TPH_DESIGN_4ENCODER_NO_FEC)
+            {
+                printf("Error - Typhoon board is not configured in 4-encoder mode. It is in mode (%d)\n", design);
+            }
+            else
+            {
+                success = true;
+            }
         }
     }
 
@@ -216,14 +229,19 @@ void TyphoonCapture::CaptureThreadProc()
         dmaFlags = TPH_FLAG_AUDIO | TPH_FLAG_VIDEO;
     }
 
-    //bool openedChannel = channel_->Open(TPH_FORMAT_1080i_5994, TPH_FLAG_VIDEO, TPH_SOURCE_SDI, TPH_V210, TPH_MEMORY_INT);
+    printf("Typhoon: Opening Channel %d; SignalStandard = %d; DMAFlags = %d; FrameFormat = %d; Source = %d\n",
+           channelId_,
+           config_.SignalStandard, 
+           dmaFlags, 
+           config_.FrameFormat,
+           config_.Source);
 
-    bool openedChannel = channel_->Open(
+    bool openedChannel = static_cast<bool>(channel_->Open(
         config_.SignalStandard, 
         dmaFlags, 
         config_.FrameFormat,
         config_.Source,
-        TPH_MEMORY_INT);
+        TPH_MEMORY_INT));
 
     // We shouldn't need to do this, but the board seems very timing sensitive
     Sleep(500);
@@ -237,7 +255,7 @@ void TyphoonCapture::CaptureThreadProc()
     else
     {
         Sleep(5);
-        setSemaphore = channel_->SetSemaphore(hFrameEvent_);
+        setSemaphore = static_cast<bool>(channel_->SetSemaphore(hFrameEvent_));
     }
 
     bool ethernetInitialized(false);
@@ -251,7 +269,7 @@ void TyphoonCapture::CaptureThreadProc()
         if(config_.Source == TPH_SOURCE_ETHERNET)
         {
             Sleep(5);
-            ethernetInitialized = channel_->SetEthernetParams(config_.IpAddr, config_.VPort, config_.APort);
+            ethernetInitialized = static_cast<bool>(channel_->SetEthernetParams(config_.IpAddr, config_.VPort, config_.APort));
         }
         else
         {
@@ -268,7 +286,7 @@ void TyphoonCapture::CaptureThreadProc()
     else
     {
         Sleep(10);
-        started = channel_->Start();
+        started = static_cast<bool>(channel_->Start());
     }
 
     // Run the capture loop until the shutdown event is set
@@ -336,7 +354,7 @@ bool TyphoonCapture::ForwardNextFrame()
 {
     TPH_FRAME_ITEM frameItem;
 
-    bool result = channel_->GetFrame(&frameItem);
+    bool result = static_cast<bool>(channel_->GetFrame(&frameItem));
 
     if (result)
     {

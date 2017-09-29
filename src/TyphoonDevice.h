@@ -21,7 +21,7 @@
 #include <string>
 #include <mutex>
 #include <assert.h>
-#include "TyphoonSDK.h"
+#include "TyphoonSDKWrapper.h"
 
 namespace streampunk {
 

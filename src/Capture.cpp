@@ -19,6 +19,7 @@
 
 #include <memory>
 #include "Capture.h"
+#include "TyphoonTypeMaps.h"
 
 namespace streampunk {
 
@@ -60,6 +61,7 @@ NAN_MODULE_INIT(Capture::Init) {
   Nan::SetPrototypeMethod(tpl, "doCapture", DoCapture);
   Nan::SetPrototypeMethod(tpl, "stop", StopCapture);
   Nan::SetPrototypeMethod(tpl, "enableAudio", EnableAudio);
+  Nan::SetPrototypeMethod(tpl, "getDisplayMode", GetDisplayMode);
 
   constructor().Reset(Nan::GetFunction(tpl).ToLocalChecked());
   Nan::Set(target, Nan::New("Capture").ToLocalChecked(),
@@ -149,6 +151,14 @@ NAN_METHOD(Capture::StopCapture) {
 }
 
 
+NAN_METHOD(Capture::GetDisplayMode)
+{
+  Capture* obj = ObjectWrap::Unwrap<Capture>(info.Holder());
+
+  info.GetReturnValue().Set(obj->GetDisplayMode());
+}
+
+
 bool Capture::capture()
 {
     bool success = false;
@@ -179,11 +189,24 @@ bool Capture::stop()
 }
 
 
+uint32_t Capture::GetDisplayMode()
+{
+    uint32_t displayMode = bmdModeUnknown;
+
+    if (capture_)
+    {
+        displayMode = TPH_DISPLAY_MODE_MAP.ToA(capture_->GetConfig().SignalStandard);
+    }
+
+    return displayMode;
+}
+
+
 bool Capture::initCapture()
 {
     bool  success(false);
 
-    TyphoonCapture::ChannelConfig config(TPH_FORMAT_1080i_5994, TPH_UYVY, TPH_SOURCE_SDI);
+    TyphoonCapture::ChannelConfig config(TPH_FORMAT_1080i_5994, TPH_V210, TPH_SOURCE_SDI);
 
     // Instantiate the TyphoonCapture object, using the specified Typhoon device...
     capture_.reset(TyphoonCapture::Create(0, 2, config, Capture::_frameArrived, this));
@@ -268,12 +291,12 @@ NAUV_WORK_CB(Capture::FrameCallback) {
   {
     if (nextFrame->videoBuffer != nullptr)
     {
-        bv = Nan::CopyBuffer(reinterpret_cast<char*>(nextFrame->videoBuffer), nextFrame->videoBufferSize).ToLocalChecked();
+        bv = Nan::CopyBuffer(reinterpret_cast<char*>(nextFrame->videoBuffer), static_cast<uint32_t>(nextFrame->videoBufferSize)).ToLocalChecked();
     }
 
     if (nextFrame->audioBuffer != nullptr && capture->audioEnabled_ == true)
     {
-        ba = Nan::CopyBuffer(reinterpret_cast<char*>(nextFrame->audioBuffer), nextFrame->audioBufferSize).ToLocalChecked();
+        ba = Nan::CopyBuffer(reinterpret_cast<char*>(nextFrame->audioBuffer), static_cast<uint32_t>(nextFrame->audioBufferSize)).ToLocalChecked();
     }
 
     capture->capture_->UnlockFrame();

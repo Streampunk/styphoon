@@ -42,4 +42,14 @@ ULONG TyphoonRegister::Read(TyphoonBoard& board, Type type, ULONG channelIdx)
     return value;
 }
 
+ULONG TyphoonRegister::GetDesign(TyphoonBoard& board)
+{
+    ULONG value(0);
+
+    // Read the design of the Typhoon board
+    value = (board.RegRead(TPH_DESIGN_REGISTER) & TPH_DESIGN_BITMASK) >> TPH_DESIGN_RSHIFT;
+
+    return value;
+}
+
 }

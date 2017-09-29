@@ -88,6 +88,28 @@ Capture.prototype.enableAudio = function (sampleRate, sampleType, channelCount) 
   }
 }
 
+Capture.prototype.getDisplayMode = function () {
+    try {
+        if (!this.initialised) {
+            this.initialised = this.capture.init() ? true : false;
+            if (!this.initialised) {
+                console.error('Cannot start capture when no device is present.');
+                return 'Cannot start capture when no device is present.';
+            }
+        }
+        var mode = this.capture.getDisplayMode();
+
+        console.log("Typhoon display mode = " + mode);
+
+        return mode;
+    } catch (err) {
+        this.emit('error', err);
+    }
+
+    return bmdModeUnknown;
+}
+
+
 /*
 function Playback (deviceIndex, displayMode, pixelFormat) {
   if (arguments.length !== 3 || typeof deviceIndex !== 'number' ||
@@ -148,7 +170,8 @@ function bmCodeToInt (s) {
 }
 
 function intToBMCode(i) {
-  var b = Buffer.allocUnsafe(4).writeUInt32(i, 0);
+  var b = Buffer.allocUnsafe(4)
+  b.writeUInt32BE(i, 0);
   return b.toString();
 }
 

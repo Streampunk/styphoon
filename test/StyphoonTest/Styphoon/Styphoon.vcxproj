@@ -134,6 +134,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\src\TyphoonTypeMaps.cpp" />
     <ClCompile Include="..\..\..\src\styphoon.cpp" />
     <ClCompile Include="..\..\..\src\BufferStatus.cpp" />
     <ClCompile Include="..\..\..\src\Capture.cpp" />
@@ -145,10 +146,13 @@
     <ClInclude Include="..\..\..\src\BufferStatus.h" />
     <ClInclude Include="..\..\..\src\Capture.h" />
     <ClInclude Include="..\..\..\src\CircularBuffer.h" />
+    <ClInclude Include="..\..\..\src\TyphoonTypeMaps.h" />
     <ClInclude Include="..\..\..\src\targetver.h" />
+    <ClInclude Include="..\..\..\src\typemap.h" />
     <ClInclude Include="..\..\..\src\TyphoonCapture.h" />
     <ClInclude Include="..\..\..\src\TyphoonDevice.h" />
     <ClInclude Include="..\..\..\src\TyphoonRegister.h" />
+    <ClInclude Include="..\..\..\src\TyphoonSDKWrapper.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\binding.gyp" />

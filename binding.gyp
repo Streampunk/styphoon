@@ -31,6 +31,7 @@
         "sources" : [ 
             "src/Capture.cpp",
             "src/styphoon.cpp",
+            "src/TyphoonTypeMaps.cpp",
             "src/TyphoonCapture.cpp",
             "src/TyphoonDevice.cpp",
             "src/TyphoonRegister.cpp",

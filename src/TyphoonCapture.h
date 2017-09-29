@@ -3,7 +3,7 @@
 #include <eh.h>
 #include <thread>
 #include <memory>
-#include "TyphoonSDK.h"
+#include "TyphoonSDKWrapper.h"
 #include "CircularBuffer.h"
 #include "TyphoonDevice.h"
 
@@ -62,6 +62,10 @@ public:
 
     bool Start();
     bool Stop();
+
+    // Get the _actual_ config of the device/channel. This can be different to what was requested,
+    // as it is dependent upon the signal being received
+    const ChannelConfig& GetConfig() { return config_; }
 
     AVBuffer* LockNextFrame(uint32_t timeoutMs);
     void UnlockFrame();

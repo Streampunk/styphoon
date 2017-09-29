@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "TyphoonSDK.h"
+#include "TyphoonSDKWrapper.h"
 
 namespace streampunk {
 
@@ -39,6 +39,9 @@ public:
 
     // Read the value in the register type for the given channel
     static ULONG Read(TyphoonBoard& board, Type type, ULONG channelIdx);
+
+    // Read the design number of the board
+    static ULONG GetDesign(TyphoonBoard& board);
 
 // Static data
 private:

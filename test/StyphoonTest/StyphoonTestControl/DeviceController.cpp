@@ -43,7 +43,7 @@ bool DeviceController::StartCapture()
 
             auto result = capture->Start();
 
-            if(AJA_SUCCESS(result))
+            if(result)
             {
                 TRACE("Capture Started!");
                 success = true;
@@ -209,14 +209,14 @@ void DeviceController::FrameArrivedCallback()
             auto frame = capture->LockNextFrame(0);
 
             status.captureFrames++;
-            status.captureFrameSize = frame->videoBufferSize;
+            status.captureFrameSize = static_cast<uint32_t>(frame->videoBufferSize);
 
             if(player && status.routing)
             {
                 player->ScheduleFrame((char*)frame->videoBuffer, frame->videoBufferSize, (char*)frame->audioBuffer, frame->audioBufferSize, &status.playbackFramesAvailable);
 
                 status.playbackFrames++;
-                status.playbackFrameSize = frame->videoBufferSize;
+                status.playbackFrameSize = static_cast<uint32_t>(frame->videoBufferSize);
             }
 
             capture->UnlockFrame();

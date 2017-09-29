@@ -56,7 +56,7 @@ private:
   bool capture();
   bool stop();
 
-  //NTV2FrameBufferFormat getPixelFormat(uint32_t genericPixelFormat);
+  uint32_t GetDisplayMode();
 
   // init() must be called after the constructor.
   // if init() fails, call the destructor
@@ -69,6 +69,8 @@ private:
   static NAN_METHOD(StopCapture);
 
   static NAN_METHOD(EnableAudio);
+
+  static NAN_METHOD(GetDisplayMode);
 
   static NAUV_WORK_CB(FrameCallback);
 
@@ -89,9 +91,6 @@ private:
 public:
   static NAN_MODULE_INIT(Init);
 
-  // IDeckLinkInputCallback
-  //virtual HRESULT    VideoInputFormatChanged (BMDVideoInputFormatChangedEvents notificationEvents, IDeckLinkDisplayMode* newDisplayMode, BMDDetectedVideoInputFormatFlags detectedSignalFlags);
-  //virtual HRESULT    VideoInputFrameArrived (IDeckLinkVideoInputFrame* arrivedFrame, IDeckLinkAudioInputPacket*);
   virtual void TestUV();
 
   void frameArrived();
