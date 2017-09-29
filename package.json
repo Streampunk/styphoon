@@ -1,0 +1,27 @@
+{
+  "name": "styphoon",
+  "version": "0.1.0",
+  "description": "Async node.js interface to CoreEl Typhoon IP capture and playback devices.",
+  "main": "index.js",
+  "scripts": {
+    "install": "node-gyp rebuild",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Streampunk/styphoon.git"
+  },
+  "author": "Streampunk Media Ltd",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/Streampunk/styphoon/issues"
+  },
+  "homepage": "https://github.com/Streampunk/styphoon#readme",
+  "dependencies": {
+    "bindings": "^1.2.1",
+    "highland": "^2.11.1",
+    "nan": "^2.6.2",
+    "node-gyp": "^3.6.2"
+  },
+  "gypfile": true
+}
