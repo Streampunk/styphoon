@@ -4,6 +4,7 @@
 #include <mutex>
 #include <memory>
 #include "TyphoonCapture.h"
+#include "ntv2enums.h"
 
 class NTV2Player;
 
@@ -30,11 +31,11 @@ public:
     DeviceController(UpdateCallback statusCallback, void* context);
     virtual ~DeviceController();
 
-    bool StartCapture();
+    bool StartCapture(ULONG frameFormat, bool compressedVideo);
     bool StopCapture();
     bool IsCapturing();
 
-    bool StartPlayback();
+    bool StartPlayback(NTV2FrameBufferFormat frameFormat);
     bool StopPlayback();
     bool IsPlaying();
 
@@ -42,7 +43,16 @@ public:
 
     void GetStatus(Status& status);
     
+    std::string GetCompressedVideoPath() { return compressedVideoPath; }
+    void SetCompressedVideoPath(std::string& path) { compressedVideoPath = path; }
+
+    std::string GetAudioPath() { return audioPath; }
+    void SetAudioPath(std::string& path) { audioPath = path; }
+
 private:
+
+    static std::string GenerateFilename(std::string& type, std::string& suffix);
+    void WriteToStreamFile(const char* buffer, uint32_t bufferSize, bool isAudio);
 
     static void FrameArrivedCallback(void* pInstance);
     void FrameArrivedCallback();
@@ -56,5 +66,9 @@ private:
     Status         status;
     std::unique_ptr<streampunk::TyphoonCapture> capture;
     std::unique_ptr<NTV2Player> player;
+    bool compressedVideo;
+
+    std::string compressedVideoPath;
+    std::string audioPath;
 };
 

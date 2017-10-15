@@ -49,5 +49,9 @@ constants not supplied by CoreEl which are needed to use the full Typhoon API co
 #define TPH_DSG4_REGREAD_FORMAT_NTSC        0x0000001E
 #define TPH_DSG4_REGREAD_FORMAT_PAL         0x0000001F
 
+
+#define TPH_DSG4_REGWRITE_UYVY 0x0
+#define TPH_DSG4_REGWRITE_V210 0x3
+
 // Provide extra unknown field for communicating to client code
 #define TPH_FORMAT_UNKNOWN  0xFFFFFFFF

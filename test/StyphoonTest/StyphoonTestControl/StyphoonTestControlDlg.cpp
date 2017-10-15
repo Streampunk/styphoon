@@ -3,6 +3,7 @@
 //
 
 #include "stdafx.h"
+#include "ntv2enums.h"
 #include "StyphoonTestControl.h"
 #include "StyphoonTestControlDlg.h"
 #include "afxdialogex.h"
@@ -63,6 +64,7 @@ CStyphoonTestControlDlg::CStyphoonTestControlDlg(CWnd* pParent /*=NULL*/)
     , capStatus(_T(""))
     , pbStatus(_T(""))
     , routeFrames(FALSE)
+    , compressedVideo(FALSE)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -87,6 +89,10 @@ void CStyphoonTestControlDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Text(pDX, IDC_CAPTURE_STATUS, capStatus);
     DDX_Text(pDX, IDC_PLAYBACK_STATUS, pbStatus);
     DDX_Check(pDX, IDC_CHECK1, routeFrames);
+    DDX_Control(pDX, IDC_COMBO_VIDEO_FORMAT, ctrlVideoFormat);
+    DDX_Control(pDX, IDC_BUTTON_START_CAPTURE, btnCapture);
+    DDX_Control(pDX, IDC_BUTTON_START_PLAYBACK, btnPlayback);
+    DDX_Check(pDX, IDC_CHECK_COMPRESSED_VIDEO, compressedVideo);
 }
 
 BEGIN_MESSAGE_MAP(CStyphoonTestControlDlg, CDialogEx)
@@ -100,6 +106,9 @@ BEGIN_MESSAGE_MAP(CStyphoonTestControlDlg, CDialogEx)
     ON_MESSAGE(AJA_STATUS_UPDATE, OnStatusUpdate)
     ON_EN_CHANGE(IDC_EDIT_CAP_CHANNEL, &CStyphoonTestControlDlg::OnEnChangeEditCapChannel)
     ON_BN_CLICKED(IDC_CHECK1, &CStyphoonTestControlDlg::OnBnClickedCheck1)
+    ON_CBN_SELCHANGE(IDC_COMBO_VIDEO_FORMAT, &CStyphoonTestControlDlg::OnCbnSelchangeCombo1)
+    ON_BN_CLICKED(IDC_BUTTON_SELECT_AUDIO_FILE, &CStyphoonTestControlDlg::OnBnClickedButtonSelectAudioFile)
+    ON_BN_CLICKED(IDC_BUTTON_SELECT_VIDEO_FILE, &CStyphoonTestControlDlg::OnBnClickedButtonSelectVideoFile)
 END_MESSAGE_MAP()
 
 
@@ -156,6 +165,7 @@ BOOL CStyphoonTestControlDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
+    ctrlVideoFormat.SetCurSel(1);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -223,11 +233,20 @@ void CStyphoonTestControlDlg::OnBnClickedButtonStartCapture()
 
     if(!control.IsCapturing())
     {
-        control.StartCapture();
+        ULONG frameFormat(TPH_V210);
+
+        if(ctrlVideoFormat.GetCurSel() != 1)
+        {
+            frameFormat = TPH_UYVY;
+        }
+
+        control.StartCapture(frameFormat, static_cast<bool>(compressedVideo));
+        btnCapture.SetWindowTextW(TEXT("Stop Capture"));
     }
     else
     {
         control.StopCapture();
+        btnCapture.SetWindowTextW(TEXT("Start Capture"));
     }
 }
 
@@ -239,11 +258,20 @@ void CStyphoonTestControlDlg::OnBnClickedButtonStartPlayback()
 
     if(!control.IsPlaying())
     {
-        control.StartPlayback();
+        NTV2FrameBufferFormat frameFormat(NTV2_FBF_10BIT_YCBCR);
+
+        if(ctrlVideoFormat.GetCurSel() != 1)
+        {
+            frameFormat = NTV2_FBF_8BIT_YCBCR;
+        }
+
+        control.StartPlayback(frameFormat);
+        btnPlayback.SetWindowTextW(TEXT("Stop Playback"));
     }
     else
     {
         control.StopPlayback();
+        btnPlayback.SetWindowTextW(TEXT("Start Playback"));
     }
 }
 
@@ -276,4 +304,22 @@ void CStyphoonTestControlDlg::OnBnClickedCheck1()
     UpdateData();
 
     control.CaptureToPlaybackRouting(static_cast<bool>(routeFrames));
+}
+
+
+void CStyphoonTestControlDlg::OnCbnSelchangeCombo1()
+{
+    // TODO: Add your control notification handler code here
+}
+
+
+void CStyphoonTestControlDlg::OnBnClickedButtonSelectAudioFile()
+{
+    // TODO: Add your control notification handler code here
+}
+
+
+void CStyphoonTestControlDlg::OnBnClickedButtonSelectVideoFile()
+{
+    // TODO: Add your control notification handler code here
 }

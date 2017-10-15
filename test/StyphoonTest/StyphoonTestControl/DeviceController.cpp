@@ -1,17 +1,25 @@
 #include "stdafx.h"
-#include "DeviceController.h"
 #include "NTV2Player.h"
 #include "ntv2utils.h"
 #include "TyphoonCapture.h"
 #include "gen2ajaTypeMaps.h"
+#include "DeviceController.h"
+#include <ctime>
+#include <chrono>
+#include <fstream>
 
 using namespace streampunk;
+
+#define DEFAULT_COMPRESSED_VIDEO_PATH "C:\\Users\\zztop\\Videos\\Captures"
 
 DeviceController::DeviceController(UpdateCallback statusCallback, void* context)
 :   statusCallback(statusCallback),
     statusCallbackContext(context),
-    status({false, false, false, 0, 0, 0, 0, 0, 0})
+    status({false, false, false, 0, 0, 0, 0, 0, 0}),
+    compressedVideo(false)
 {
+    audioPath = DeviceController::GenerateFilename(string("Audio"), string(".raw"));
+    compressedVideoPath = DeviceController::GenerateFilename(string("Video"), string(".mp4"));
 }
 
 
@@ -22,18 +30,20 @@ DeviceController::~DeviceController()
 }
 
 
-bool DeviceController::StartCapture()
+bool DeviceController::StartCapture(ULONG frameFormat, bool compressedVideo)
 {
     bool success(false);
 
     std::lock_guard<std::mutex> lock(protectState);
+
+    this->compressedVideo = compressedVideo;
 
     if(!capture)
     {
         TRACE("Initializing Capture...");
 
 //        TyphoonCapture::ChannelConfig config(TPH_FORMAT_1080i_5000, TPH_V210, TPH_SOURCE_SDI);
-        TyphoonCapture::ChannelConfig config(0x00000004, TPH_V210, TPH_SOURCE_SDI, false);
+        TyphoonCapture::ChannelConfig config(0x00000004, frameFormat, TPH_SOURCE_SDI, compressedVideo);
 
         capture.reset(TyphoonCapture::Create(0, 0, config, DeviceController::FrameArrivedCallback, this));
 
@@ -95,7 +105,7 @@ bool DeviceController::IsCapturing()
 }
 
 
-bool DeviceController::StartPlayback()
+bool DeviceController::StartPlayback(NTV2FrameBufferFormat frameFormat)
 {
     bool success(false);
 
@@ -110,8 +120,9 @@ bool DeviceController::StartPlayback()
         const NTV2Channel channel(::GetNTV2ChannelForIndex(channelNumber - 1));
         const NTV2OutputDestination    outputDest(::NTV2ChannelToOutputDestination(channel));
 
-//        player.reset(new NTV2Player(&DEFAULT_INIT_PARAMS, "0", true, channel, NTV2_FBF_10BIT_YCBCR, outputDest, NTV2_FORMAT_1080i_5994,false, false, false));
-        player.reset(new NTV2Player(&DEFAULT_INIT_PARAMS, "0", true, channel, NTV2_FBF_8BIT_YCBCR, outputDest, NTV2_FORMAT_1080i_5994,false, false, false));
+//        player.reset(new NTV2Player(&DEFAULT_INIT_PARAMS, "0", true, channel, NTV2_FBF_10BIT_YCBCRA, outputDest, NTV2_FORMAT_1080i_5994,false, false, false));
+        player.reset(new NTV2Player(&DEFAULT_INIT_PARAMS, "0", true, channel, frameFormat, outputDest, NTV2_FORMAT_1080i_5994,false, false, false));
+//        player.reset(new NTV2Player(&DEFAULT_INIT_PARAMS, "0", true, channel, NTV2_FBF_8BIT_YCBCR, outputDest, NTV2_FORMAT_1080i_5994,false, false, false));
         player->SetScheduledFrameCallback(this, DeviceController::FrameRequiredCallback);
 
         auto result = player->Init();
@@ -175,6 +186,62 @@ bool DeviceController::IsPlaying()
 }
 
 
+string DeviceController::GenerateFilename(std::string& type, std::string& suffix)
+{
+    using namespace std::chrono;
+
+    time_t tt;
+    string timestamp("NO_TIMESTAMP");
+
+    tt = system_clock::to_time_t ( system_clock::now() );
+
+    char timedisplay[100];
+    struct tm buf;
+    errno_t err = localtime_s(&buf, &tt);
+
+    if (std::strftime(timedisplay, sizeof(timedisplay), "%Y-%m-%d-%H-%M-%S", &buf)) 
+    {
+        timestamp = timedisplay;
+    }
+
+    PWSTR szPath = nullptr;
+    string fullPath;
+
+    if(SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Videos, 
+                                      KF_FLAG_DEFAULT, 
+                                      NULL, 
+                                      &szPath))) 
+    {
+        wstring ws(szPath);
+        string str(ws.begin(), ws.end());
+
+        fullPath = str + "\\" + type + "_" + timestamp + suffix;
+        CoTaskMemFree(szPath);
+    }
+
+    return fullPath;
+}
+
+
+void DeviceController::WriteToStreamFile(const char* buffer, uint32_t bufferSize, bool isAudio)
+{
+    const char* filename(nullptr);
+
+    if(isAudio)
+    {
+        filename = audioPath.c_str();
+    }
+    else
+    {
+        filename = compressedVideoPath.c_str();
+    }
+
+    auto myfile = std::fstream(filename, std::ios::out | std::ios::app | std::ios::binary);
+    myfile.write(buffer, bufferSize);
+    myfile.close();
+}
+
+
 bool DeviceController::CaptureToPlaybackRouting(bool enabled)
 {
     std::lock_guard<std::mutex> lock(protectState);
@@ -219,6 +286,13 @@ void DeviceController::FrameArrivedCallback()
                 status.playbackFrameSize = static_cast<uint32_t>(frame->videoBufferSize);
             }
 
+            WriteToStreamFile((char*)frame->audioBuffer, frame->audioBufferSize, true);
+
+            if(compressedVideo)
+            {
+                WriteToStreamFile((char*)frame->videoBuffer, frame->videoBufferSize, false);
+            }
+
             capture->UnlockFrame();
         }
     }
@@ -238,6 +312,6 @@ void DeviceController::FrameRequiredCallback(void* pInstance)
 
 void DeviceController::FrameRequiredCallback()
 {
-    std::lock_guard<std::mutex> lock(protectState);
+//    std::lock_guard<std::mutex> lock(protectState);
 
 }

@@ -34,7 +34,7 @@ Capture::Capture(uint32_t deviceIndex, uint32_t channelIndex, uint32_t pixelForm
   genericPixelFormat_(pixelFormat),
   inputSource_(inputSource),
   compressed_(compressed),
-  audioEnabled_(false)
+  audioEnabled_(true)
   //genericPixelFormat_;
   //nativePixelFormat_
   //width_;
@@ -278,10 +278,6 @@ void Capture::_frameArrived(void* context)
 }
 
 
-//HRESULT    Capture::VideoInputFormatChanged (BMDVideoInputFormatChangedEvents notificationEvents, IDeckLinkDisplayMode* newDisplayMode, BMDDetectedVideoInputFormatFlags detectedSignalFlags) {
-//  return S_OK;
-//};
-
 void Capture::TestUV() {
   uv_async_send(async);
 }
@@ -298,19 +294,27 @@ NAUV_WORK_CB(Capture::FrameCallback) {
 
   auto nextFrame = capture->capture_->LockNextFrame(0);
 
+  printf("** In FrameCallback. Next frame = P(%p)\n", nextFrame);
+
   if (nextFrame != nullptr)
   {
+    printf("**    Data buffer P(%p) Size(%d)\n", nextFrame->dataBuffer, nextFrame->dataBufferSize);
+    printf("**    Video buffer P(%p) Size(%d)\n", nextFrame->videoBuffer, nextFrame->videoBufferSize);
+
     if(capture->compressed_ && nextFrame->dataBuffer != nullptr)
     {
+        printf("Copying data buffer P(%p) Size(%d)\n", nextFrame->dataBuffer, nextFrame->dataBufferSize);
         bv = Nan::CopyBuffer(reinterpret_cast<char*>(nextFrame->dataBuffer), static_cast<uint32_t>(nextFrame->dataBufferSize)).ToLocalChecked();
     }
     else if ((!capture->compressed_) && nextFrame->videoBuffer != nullptr)
     {
+        printf("Copying video buffer P(%p) Size(%d)\n", nextFrame->videoBuffer, nextFrame->videoBufferSize);
         bv = Nan::CopyBuffer(reinterpret_cast<char*>(nextFrame->videoBuffer), static_cast<uint32_t>(nextFrame->videoBufferSize)).ToLocalChecked();
     }
 
     if (nextFrame->audioBuffer != nullptr && capture->audioEnabled_ == true)
     {
+        printf("Copying audio buffer P(%p) Size(%d)\n", nextFrame->audioBuffer, nextFrame->audioBufferSize);
         ba = Nan::CopyBuffer(reinterpret_cast<char*>(nextFrame->audioBuffer), static_cast<uint32_t>(nextFrame->audioBufferSize)).ToLocalChecked();
     }
 

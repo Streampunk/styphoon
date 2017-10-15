@@ -23,7 +23,12 @@ public:
         freeBuffers_(_Size)
     {}
 
-    bool LockBufferForWrite(unsigned char*& buffer, size_t requiredBufferSize, uint32_t waitTimeoutMs)
+    bool LockBufferForWrite(
+        unsigned char*& videoBuffer, 
+        size_t requiredVideoBufferSize_, 
+        unsigned char*& audioBuffer, 
+        size_t requiredAudioBufferSize_, 
+        uint32_t waitTimeoutMs)
     {
         bool locked(false);
         std::unique_lock<std::mutex> lock(protectBuffers_);
@@ -45,14 +50,21 @@ public:
                 freeBuffers_--;
                 locked = true;
 
-                std::vector<unsigned char>& writeBuffer = buffers_[nextWriteIdx_];
+                std::vector<unsigned char>& videoWriteBuffer = videoBuffers_[nextWriteIdx_];
+                std::vector<unsigned char>& audioWriteBuffer = audioBuffers_[nextWriteIdx_];
 
-                if(writeBuffer.size() != requiredBufferSize)
+                if(videoWriteBuffer.size() != requiredVideoBufferSize_)
                 {
-                    writeBuffer.resize(requiredBufferSize);
+                    videoWriteBuffer.resize(requiredVideoBufferSize_);
                 }
 
-                buffer = writeBuffer.data();
+                if(audioWriteBuffer.size() != requiredAudioBufferSize_)
+                {
+                    audioWriteBuffer.resize(requiredAudioBufferSize_);
+                }
+
+                videoBuffer = videoWriteBuffer.data();
+                audioBuffer = audioWriteBuffer.data();
             }
         }
 
@@ -77,7 +89,12 @@ public:
         }
     }
 
-    bool LockBufferForRead(unsigned char*& buffer, size_t& bufferSize, uint32_t waitTimeoutMs)
+    bool LockBufferForRead(
+        unsigned char*& videoBuffer, 
+        size_t& videoBufferSize, 
+        unsigned char*& audioBuffer, 
+        size_t& audioBufferSize, 
+        uint32_t waitTimeoutMs)
     {
         bool locked(false);
         std::unique_lock<std::mutex> lock(protectBuffers_);
@@ -99,8 +116,10 @@ public:
                 readLocked_ = true;
                 locked = true;
 
-                buffer = buffers_[readIdx_].data();
-                bufferSize = buffers_[readIdx_].size();
+                videoBuffer = videoBuffers_[readIdx_].data();
+                videoBufferSize = videoBuffers_[readIdx_].size();
+                audioBuffer = audioBuffers_[readIdx_].data();
+                audioBufferSize = audioBuffers_[readIdx_].size();
 
                 // We have moved the read index forward, freeing a slot to be written to, so signal this
                 lock.unlock();
@@ -139,7 +158,8 @@ private:
 
     uint32_t freeBuffers_;
 
-    std::array<std::vector<unsigned char>, _Size> buffers_;
+    std::array<std::vector<unsigned char>, _Size> videoBuffers_;
+    std::array<std::vector<unsigned char>, _Size> audioBuffers_;
     std::mutex protectBuffers_;
     std::condition_variable bufferToRead_;
     std::condition_variable bufferToWrite_;

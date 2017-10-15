@@ -97,20 +97,20 @@ TyphoonCapture::TyphoonCapture(UINT boardId, ULONG channelId, ChannelConfig& con
 
 TyphoonCapture::AVBuffer* TyphoonCapture::LockNextFrame(uint32_t timeoutMs)
 {
-    size_t&         bufferSize = currentFrame.videoBufferSize;
-    unsigned char*& buffer     = currentFrame.videoBuffer;
+    size_t&         bufferSize = currentFrame_.videoBufferSize;
+    unsigned char*& buffer     = currentFrame_.videoBuffer;
 
     if(config_.CompressedVideo)
     {
-        bufferSize = currentFrame.dataBufferSize;
-        buffer     = currentFrame.dataBuffer;
+        bufferSize = currentFrame_.dataBufferSize;
+        buffer     = currentFrame_.dataBuffer;
     }
 
-    bool locked = captureBuffer_.LockBufferForRead(buffer, bufferSize, timeoutMs);
+    bool locked = captureBuffer_.LockBufferForRead(buffer, bufferSize, currentFrame_.audioBuffer, currentFrame_.audioBufferSize, timeoutMs);
 
     if(locked)
     {
-        return &currentFrame;
+        return &currentFrame_;
     }
     else
     {
@@ -142,7 +142,7 @@ bool TyphoonCapture::Initialize()
     bool result = board_.Initialize(boardId_);
 
     // We shouldn't need to do this, but the board seems very timing sensitive
-    Sleep(500);
+    Sleep(100);
 
     if (result != true)
     {
@@ -161,12 +161,12 @@ bool TyphoonCapture::Initialize()
         {
             channel_ = board_->GetChannel(channelId_);
 
-            ULONG format = TyphoonRegister::Read(*board_, TyphoonRegister::InputFormat, channelId_);
+            ULONG signalStandard = TyphoonRegister::Read(*board_, TyphoonRegister::InputSignalStandard, channelId_);
             ULONG design = TyphoonRegister::GetDesign(*board_);
 
             // Try to determine the incoming signal standard in a form that can be used to open the channel.
             // If this isn't possible, use the default as specified during construction
-            ULONG incomingSignalStandard = TPH_DISPLAY_MODE_TRANSLATION_MAP.ToB(format);
+            ULONG incomingSignalStandard = TPH_DISPLAY_MODE_TRANSLATION_MAP.ToB(signalStandard);
 
             if(incomingSignalStandard != TPH_FORMAT_UNKNOWN)
             {
@@ -175,7 +175,7 @@ bool TyphoonCapture::Initialize()
             }
             else
             {
-                printf("Incoming signal type (%d) not recognised, defaulting to (%d)\n", format, config_.SignalStandard);
+                printf("Incoming signal type (%d) not recognised, defaulting to (%d)\n", incomingSignalStandard, config_.SignalStandard);
             }
 
             if(design != TPH_DESIGN_4ENCODER_NO_FEC)
@@ -232,7 +232,9 @@ void TyphoonCapture::CaptureThreadProc()
 
     if(config_.CompressedVideo)
     {
-        dmaFlags = TPH_FLAG_AUDIO | TPH_FLAG_DATA;
+        printf("**** Setting compressed video\n");
+        dmaFlags = TPH_FLAG_AUDIO | TPH_FLAG_DATA | TPH_FLAG_VIDEO;
+//        dmaFlags = TPH_FLAG_DATA;
     }
     else
     {
@@ -246,21 +248,49 @@ void TyphoonCapture::CaptureThreadProc()
            config_.FrameFormat,
            config_.Source);
 
+    //ULONG frameFormat(TPH_DSG4_REGWRITE_V210);
+    //
+    //if(config_.FrameFormat == TPH_UYVY)
+    //{
+    //    frameFormat = TPH_DSG4_REGWRITE_UYVY;
+    //}
+    //
+    //bool setFrameFormat = TyphoonRegister::Write(*board_, TyphoonRegister::FrameFormat, channelId_, frameFormat);
+    
     bool openedChannel = static_cast<bool>(channel_->Open(
         config_.SignalStandard, 
         dmaFlags, 
-        config_.FrameFormat,
+        TPH_V210, // Setting the frame format here merely sets the max expected incoming pixel bit-size, so always use V210 (i.e. 10bit)
         config_.Source,
         TPH_MEMORY_INT));
 
     // We shouldn't need to do this, but the board seems very timing sensitive
-    Sleep(500);
+    Sleep(100);
 
-    bool setSemaphore(false);
+    bool setFrameFormat = false;
 
     if(openedChannel == false)
     {
         printf("Unable to open Typhoon channel\n");
+    }
+    else
+    {
+        ULONG frameFormat(TPH_DSG4_REGWRITE_V210);
+        //ULONG frameFormat(TPH_DSG4_REGWRITE_UYVY);
+
+        if(config_.FrameFormat == TPH_UYVY)
+        {
+            frameFormat = TPH_DSG4_REGWRITE_UYVY;
+        }
+
+        setFrameFormat = TyphoonRegister::Write(*board_, TyphoonRegister::FrameFormat, channelId_, frameFormat);
+    }
+
+    bool setSemaphore(false);
+
+    if(setFrameFormat == false)
+    {
+        printf("Unable to set frame format channel\n");
     }
     else
     {
@@ -368,23 +398,52 @@ bool TyphoonCapture::ForwardNextFrame()
 
     if (result)
     {
-        unsigned char* frameBuffer = nullptr;
+        unsigned char* videoFrameBuffer = nullptr;
+        unsigned char* audioFrameBuffer = nullptr;
+
         uint32_t freeBuffers = 0;
 
-        ULONG bufferSize = frameItem.VideoBufferSize;
-        PVOID64 buffer = frameItem.pBufferVideo;
+        ULONG videoBufferSize = frameItem.VideoBufferSize;
+        PVOID64 videoBuffer = frameItem.pBufferVideo;
 
         if(config_.CompressedVideo)
         {
-            bufferSize = frameItem.DataBufferSize;
-            buffer = frameItem.pBufferData;
+            videoBufferSize = frameItem.DataBufferSize;
+            videoBuffer = frameItem.pBufferData;
+        }
+        else if(config_.FrameFormat != TPH_UYVY)
+        {
+            // If we are receiving 10bit video frame data then we need to do some byte manipulation
+            // to get the frame into correct v210 format
+            char tempBuf[4];
+
+            for (int j = 0; j < frameItem.VideoBufferSize/4; ++j) {
+                            
+                /**
+                    Word swapped and saved to temp buffer
+                */
+                tempBuf[0] = *((char *)frameItem.pBufferVideo + (j * 4 + 3));
+                tempBuf[1] = *((char *)frameItem.pBufferVideo + (j * 4 + 2));
+                tempBuf[2] = *((char *)frameItem.pBufferVideo + (j * 4 + 1));
+                tempBuf[3] = *((char *)frameItem.pBufferVideo + (j * 4 + 0));
+
+                /**
+                    Temporary buffer copied back 
+                */
+                *((char *)frameItem.pBufferVideo + (j * 4 + 0)) = tempBuf[0];
+                *((char *)frameItem.pBufferVideo + (j * 4 + 1)) = tempBuf[1];
+                *((char *)frameItem.pBufferVideo + (j * 4 + 2)) = tempBuf[2];
+                *((char *)frameItem.pBufferVideo + (j * 4 + 3)) = tempBuf[3];
+            }
         }
 
-        result = captureBuffer_.LockBufferForWrite(frameBuffer, bufferSize, 10);
+        result = captureBuffer_.LockBufferForWrite(videoFrameBuffer, videoBufferSize, audioFrameBuffer, frameItem.AudioBufferSize, 10);
 
         if(result)
         {
-            memcpy_s(frameBuffer, frameItem.VideoBufferSize, buffer, bufferSize);
+            memcpy_s(videoFrameBuffer, videoBufferSize, videoBuffer, videoBufferSize);
+            memcpy_s(audioFrameBuffer, frameItem.AudioBufferSize, frameItem.pBufferAudio, frameItem.AudioBufferSize);
+
             captureBuffer_.ReleaseBufferFromWrite(&freeBuffers);
         }
         else

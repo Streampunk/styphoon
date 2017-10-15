@@ -5,6 +5,7 @@
 #pragma once
 
 #include "DeviceController.h"
+#include "afxwin.h"
 
 #define AJA_STATUS_UPDATE (WM_APP + 1)
 
@@ -60,4 +61,14 @@ public:
     CString pbStatus;
     afx_msg void OnBnClickedCheck1();
     BOOL routeFrames;
+    afx_msg void OnCbnSelchangeCombo1();
+    afx_msg void OnBnClickedButtonSelectAudioFile();
+    afx_msg void OnBnClickedButtonSelectVideoFile();
+private:
+    CComboBox ctrlVideoFormat;
+public:
+    CButton btnCapture;
+    CButton btnPlayback;
+private:
+    BOOL compressedVideo;
 };

@@ -23,8 +23,9 @@ namespace streampunk {
 ULONG TyphoonRegister::registerLookup[TyphoonRegister::MaxType][TPH_CHANNELS] =
 {
     //   CH1,    CH2,    CH3,    CH4
-    // Input Format Register
-    { 0x11C4, 0x25C4, 0x35C4, 0X45C4 }
+    // InputSignalStandard Register
+    { 0x11C4, 0x25C4, 0x35C4, 0X45C4 },
+    { 0x1004, 0x2004, 0x3004, 0x4004 }
 };
 
 ULONG TyphoonRegister::Read(TyphoonBoard& board, Type type, ULONG channelIdx)
@@ -40,6 +41,21 @@ ULONG TyphoonRegister::Read(TyphoonBoard& board, Type type, ULONG channelIdx)
     }
 
     return value;
+}
+
+// Write the value in the register type for the given channel
+bool TyphoonRegister::Write(TyphoonBoard& board, Type type, ULONG channelIdx, ULONG value)
+{
+    assert(type < MaxType);
+    assert(channelIdx < TPH_CHANNELS);
+    bool success(false);
+
+    if((type < MaxType) && (channelIdx < TPH_CHANNELS))
+    {
+        success = static_cast<bool>(board.RegWrite(registerLookup[type][channelIdx], value));
+    }
+
+    return success;
 }
 
 ULONG TyphoonRegister::GetDesign(TyphoonBoard& board)

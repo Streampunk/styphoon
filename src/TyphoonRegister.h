@@ -29,8 +29,9 @@ public:
     // The register type
     enum Type
     {
-        InputFormat = 0,
-        MaxType = 1
+        InputSignalStandard = 0,
+        FrameFormat = 1,
+        MaxType = 2
     };
 
 
@@ -39,6 +40,9 @@ public:
 
     // Read the value in the register type for the given channel
     static ULONG Read(TyphoonBoard& board, Type type, ULONG channelIdx);
+
+    // Write the value in the register type for the given channel
+    static bool Write(TyphoonBoard& board, Type type, ULONG channelIdx, ULONG value);
 
     // Read the design number of the board
     static ULONG GetDesign(TyphoonBoard& board);

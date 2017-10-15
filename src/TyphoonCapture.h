@@ -97,7 +97,7 @@ private:
     HANDLE hShutdownEvent_;
     HANDLE hFrameEvent_;
     ChannelConfig config_;
-    AVBuffer currentFrame;
+    AVBuffer currentFrame_;
 
     CircularBuffer<CaptureBufferSize> captureBuffer_;
 };
