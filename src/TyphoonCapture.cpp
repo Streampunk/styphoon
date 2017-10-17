@@ -437,12 +437,18 @@ bool TyphoonCapture::ForwardNextFrame()
             }
         }
 
-        result = captureBuffer_.LockBufferForWrite(videoFrameBuffer, videoBufferSize, audioFrameBuffer, frameItem.AudioBufferSize, 10);
+        const unsigned char* audioTransformBuffer(nullptr);
+        uint32_t audioTransformBufferSize(0);
+
+        tie(audioTransformBuffer, audioTransformBufferSize) = 
+            audioTransform_.Transform((const unsigned char*)frameItem.pBufferAudio, frameItem.AudioBufferSize);
+
+        result = captureBuffer_.LockBufferForWrite(videoFrameBuffer, videoBufferSize, audioFrameBuffer, audioTransformBufferSize, 10);
 
         if(result)
         {
             memcpy_s(videoFrameBuffer, videoBufferSize, videoBuffer, videoBufferSize);
-            memcpy_s(audioFrameBuffer, frameItem.AudioBufferSize, frameItem.pBufferAudio, frameItem.AudioBufferSize);
+            memcpy_s(audioFrameBuffer, audioTransformBufferSize, audioTransformBuffer, audioTransformBufferSize);
 
             captureBuffer_.ReleaseBufferFromWrite(&freeBuffers);
         }

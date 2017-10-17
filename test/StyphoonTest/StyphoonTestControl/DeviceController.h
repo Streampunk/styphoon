@@ -70,5 +70,7 @@ private:
 
     std::string compressedVideoPath;
     std::string audioPath;
+
+    uint32_t audioFileCounter;
 };
 

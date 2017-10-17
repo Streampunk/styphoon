@@ -74,6 +74,9 @@
     <ClInclude Include="..\..\..\src\TyphoonTypeMaps.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\AudioTransform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\scratch\convertEBU.js">

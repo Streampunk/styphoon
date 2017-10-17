@@ -12,11 +12,14 @@ using namespace streampunk;
 
 #define DEFAULT_COMPRESSED_VIDEO_PATH "C:\\Users\\zztop\\Videos\\Captures"
 
+//#define STORE_AUDIO_CHUNKS
+
 DeviceController::DeviceController(UpdateCallback statusCallback, void* context)
 :   statusCallback(statusCallback),
     statusCallbackContext(context),
     status({false, false, false, 0, 0, 0, 0, 0, 0}),
-    compressedVideo(false)
+    compressedVideo(false),
+    audioFileCounter(0)
 {
     audioPath = DeviceController::GenerateFilename(string("Audio"), string(".raw"));
     compressedVideoPath = DeviceController::GenerateFilename(string("Video"), string(".mp4"));
@@ -222,6 +225,9 @@ string DeviceController::GenerateFilename(std::string& type, std::string& suffix
     return fullPath;
 }
 
+#include "AudioTransform.h"
+
+static AudioTransform audioTransform;
 
 void DeviceController::WriteToStreamFile(const char* buffer, uint32_t bufferSize, bool isAudio)
 {
@@ -229,6 +235,23 @@ void DeviceController::WriteToStreamFile(const char* buffer, uint32_t bufferSize
 
     if(isAudio)
     {
+        //const unsigned char* outputBuffer(nullptr);
+        //uint32_t outputBufferSize(0);
+        //
+        //tie(outputBuffer, outputBufferSize) = audioTransform.Transform((const unsigned char*)buffer, bufferSize);
+        //
+        //buffer = (char*)outputBuffer;
+        //bufferSize = outputBufferSize;
+
+#ifdef STORE_AUDIO_CHUNKS
+        char filenameBuffer[256];
+        sprintf_s(filenameBuffer, 256, "%s_%d.raw", audioPath.c_str(), ++audioFileCounter);
+
+        auto chunkFile = std::fstream(filenameBuffer, std::ios::out | std::ios::binary);
+        chunkFile.write(buffer, bufferSize);
+        chunkFile.close();
+#endif
+
         filename = audioPath.c_str();
     }
     else

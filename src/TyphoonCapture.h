@@ -6,6 +6,7 @@
 #include "TyphoonSDKWrapper.h"
 #include "CircularBuffer.h"
 #include "TyphoonDevice.h"
+#include "AudioTransform.h"
 
 namespace streampunk
 {
@@ -100,6 +101,7 @@ private:
     AVBuffer currentFrame_;
 
     CircularBuffer<CaptureBufferSize> captureBuffer_;
+    AudioTransform audioTransform_;
 };
 
 };
