@@ -313,7 +313,7 @@ void DeviceController::FrameArrivedCallback()
 
             if(compressedVideo)
             {
-                WriteToStreamFile((char*)frame->videoBuffer, frame->videoBufferSize, false);
+                WriteToStreamFile((char*)frame->dataBuffer, frame->dataBufferSize, false);
             }
 
             capture->UnlockFrame();

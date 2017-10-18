@@ -55,6 +55,16 @@ public:
         size_t audioBufferSize = 0;
         unsigned char* dataBuffer  = nullptr;
         size_t dataBufferSize = 0;
+
+        void Reset()
+        {
+            videoBuffer  = nullptr;
+            videoBufferSize = 0;
+            audioBuffer  = nullptr;
+            audioBufferSize = 0;
+            dataBuffer  = nullptr;
+            dataBufferSize = 0;
+        }
     };
 
 public:

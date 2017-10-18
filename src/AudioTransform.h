@@ -6,7 +6,7 @@
 
 namespace streampunk
 {
-
+ 
 class AudioTransform
 {
     static const uint32_t CHANNEL_SEPARATION_BYTES = 0x2000;
@@ -15,8 +15,17 @@ class AudioTransform
 
 public:
 
-    AudioTransform()
-    {}
+    AudioTransform(uint32_t sampleSize = 24)
+    {
+        if(sampleSize == 16)
+        {
+            convertTo16Bit = true;
+        }
+        else
+        {
+            convertTo16Bit = false;
+        }
+    }
 
 
     std::tuple<const unsigned char*, uint32_t> Transform(const unsigned char* inputBuffer, uint32_t inputBufferSize)
@@ -44,23 +53,49 @@ public:
 
         for(uint32_t sampleIdx = 0; sampleIdx < currentNumSamples; sampleIdx++)
         {
-            // Accumulate channel L and write to file
-            int sample = *(int *)leftChannelBuffer;
-            sample = (sample & 0xFF000000) >> 24 | (sample & 0x00FF0000) >> 8 | (sample & 0x0000FF00) << 8 | (sample & 0x000000FF) << 24;
-            sample = sample & 0x00FFFFFF;
-            memcpy_s(&outputBuffer[outputBufferIdx], MAX_BUFFER_SIZE - outputBufferIdx, (void *)&sample, 3);
+            if(convertTo16Bit)
+            { 
+                // Accumulate channel L and write to file
+                int sample = *(int *)leftChannelBuffer;
 
-            outputBufferIdx += 3;
-            leftChannelBuffer += 4;
+                sample = (sample & 0xFF000000) >> 24 | (sample & 0x00FF0000) >> 8 | (sample & 0x0000FF00) << 8 | (sample & 0x000000FF) << 24;
+//                sample = (sample & 0xFF000000) >> 16 | (sample & 0x00FF0000) >> 16;
+                int sample16 = (sample) & 0x0000FFFF;
+                memcpy_s(&outputBuffer[outputBufferIdx], MAX_BUFFER_SIZE - outputBufferIdx, (void *)&sample16, 2);
 
-            // Accumulate channel R and write to file
-            sample = *(int *)rightChannelBuffer;
-            sample = (sample & 0xFF000000) >> 24 | (sample & 0x00FF0000) >> 8 | (sample & 0x0000FF00) << 8 | (sample & 0x000000FF) << 24;
-            sample = sample & 0x00FFFFFF;
-            memcpy_s(&outputBuffer[outputBufferIdx], MAX_BUFFER_SIZE - outputBufferIdx, (void *)&sample, 3);
+                outputBufferIdx += 2;
+                leftChannelBuffer += 4; 
 
-            outputBufferIdx += 3;
-            rightChannelBuffer += 4;
+                // Accumulate channel R and write to file
+                sample = *(int *)rightChannelBuffer;
+                sample = (sample & 0xFF000000) >> 24 | (sample & 0x00FF0000) >> 8 | (sample & 0x0000FF00) << 8 | (sample & 0x000000FF) << 24;
+//                sample = (sample & 0xFF000000) >> 16 | (sample & 0x00FF0000) >> 16;
+                sample16 = (sample) & 0x0000FFFF;
+                memcpy_s(&outputBuffer[outputBufferIdx], MAX_BUFFER_SIZE - outputBufferIdx, (void *)&sample16, 2);
+
+                outputBufferIdx += 2;
+                rightChannelBuffer += 4;
+            }
+            else
+            {
+                // Accumulate channel L and write to file
+                int sample = *(int *)leftChannelBuffer;
+                sample = (sample & 0xFF000000) >> 24 | (sample & 0x00FF0000) >> 8 | (sample & 0x0000FF00) << 8 | (sample & 0x000000FF) << 24;
+                sample = sample & 0x00FFFFFF;
+                memcpy_s(&outputBuffer[outputBufferIdx], MAX_BUFFER_SIZE - outputBufferIdx, (void *)&sample, 3);
+
+                outputBufferIdx += 3;
+                leftChannelBuffer += 4;
+
+                // Accumulate channel R and write to file
+                sample = *(int *)rightChannelBuffer;
+                sample = (sample & 0xFF000000) >> 24 | (sample & 0x00FF0000) >> 8 | (sample & 0x0000FF00) << 8 | (sample & 0x000000FF) << 24;
+                sample = sample & 0x00FFFFFF;
+                memcpy_s(&outputBuffer[outputBufferIdx], MAX_BUFFER_SIZE - outputBufferIdx, (void *)&sample, 3);
+
+                outputBufferIdx += 3;
+                rightChannelBuffer += 4;
+            }
         }
 
         return std::make_tuple(outputBuffer, outputBufferIdx);
@@ -70,6 +105,7 @@ public:
 private:
 
     unsigned char outputBuffer[MAX_BUFFER_SIZE];
+    bool convertTo16Bit;
 };
 
 }

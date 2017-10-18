@@ -294,27 +294,27 @@ NAUV_WORK_CB(Capture::FrameCallback) {
 
   auto nextFrame = capture->capture_->LockNextFrame(0);
 
-  printf("** In FrameCallback. Next frame = P(%p)\n", nextFrame);
+  //printf("** In FrameCallback. Next frame = P(%p)\n", nextFrame);
 
   if (nextFrame != nullptr)
   {
-    printf("**    Data buffer P(%p) Size(%d)\n", nextFrame->dataBuffer, nextFrame->dataBufferSize);
-    printf("**    Video buffer P(%p) Size(%d)\n", nextFrame->videoBuffer, nextFrame->videoBufferSize);
+    //printf("**    Data buffer P(%p) Size(%d)\n", nextFrame->dataBuffer, nextFrame->dataBufferSize);
+    //printf("**    Video buffer P(%p) Size(%d)\n", nextFrame->videoBuffer, nextFrame->videoBufferSize);
 
     if(capture->compressed_ && nextFrame->dataBuffer != nullptr)
     {
-        printf("Copying data buffer P(%p) Size(%d)\n", nextFrame->dataBuffer, nextFrame->dataBufferSize);
+        //printf("Copying data buffer P(%p) Size(%d)\n", nextFrame->dataBuffer, nextFrame->dataBufferSize);
         bv = Nan::CopyBuffer(reinterpret_cast<char*>(nextFrame->dataBuffer), static_cast<uint32_t>(nextFrame->dataBufferSize)).ToLocalChecked();
     }
     else if ((!capture->compressed_) && nextFrame->videoBuffer != nullptr)
     {
-        printf("Copying video buffer P(%p) Size(%d)\n", nextFrame->videoBuffer, nextFrame->videoBufferSize);
+        //printf("Copying video buffer P(%p) Size(%d)\n", nextFrame->videoBuffer, nextFrame->videoBufferSize);
         bv = Nan::CopyBuffer(reinterpret_cast<char*>(nextFrame->videoBuffer), static_cast<uint32_t>(nextFrame->videoBufferSize)).ToLocalChecked();
     }
 
     if (nextFrame->audioBuffer != nullptr && capture->audioEnabled_ == true)
     {
-        printf("Copying audio buffer P(%p) Size(%d)\n", nextFrame->audioBuffer, nextFrame->audioBufferSize);
+        //printf("Copying audio buffer P(%p) Size(%d)\n", nextFrame->audioBuffer, nextFrame->audioBufferSize);
         ba = Nan::CopyBuffer(reinterpret_cast<char*>(nextFrame->audioBuffer), static_cast<uint32_t>(nextFrame->audioBufferSize)).ToLocalChecked();
     }
 

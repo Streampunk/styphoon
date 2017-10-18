@@ -627,6 +627,7 @@ var deviceAdapter = {
   bmdDisplayModeColorspaceRec709  : 1 << 2,
   bmdAudioSampleRate48kHz	        : 48000,
   bmdAudioSampleType16bitInteger	: 16,
+  bmdAudioSampleType24bitInteger	: 24,
   bmdAudioSampleType32bitInteger	: 32,
   // Convert to and from Black Magic codes.
   intToBMCode : intToBMCode,

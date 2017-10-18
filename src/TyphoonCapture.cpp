@@ -97,16 +97,18 @@ TyphoonCapture::TyphoonCapture(UINT boardId, ULONG channelId, ChannelConfig& con
 
 TyphoonCapture::AVBuffer* TyphoonCapture::LockNextFrame(uint32_t timeoutMs)
 {
-    size_t&         bufferSize = currentFrame_.videoBufferSize;
-    unsigned char*& buffer     = currentFrame_.videoBuffer;
+    currentFrame_.Reset();
+
+    size_t*         bufferSize = &currentFrame_.videoBufferSize;
+    unsigned char** buffer     = &currentFrame_.videoBuffer;
 
     if(config_.CompressedVideo)
     {
-        bufferSize = currentFrame_.dataBufferSize;
-        buffer     = currentFrame_.dataBuffer;
+        bufferSize = &currentFrame_.dataBufferSize;
+        buffer     = &currentFrame_.dataBuffer;
     }
 
-    bool locked = captureBuffer_.LockBufferForRead(buffer, bufferSize, currentFrame_.audioBuffer, currentFrame_.audioBufferSize, timeoutMs);
+    bool locked = captureBuffer_.LockBufferForRead(*buffer, *bufferSize, currentFrame_.audioBuffer, currentFrame_.audioBufferSize, timeoutMs);
 
     if(locked)
     {
@@ -437,29 +439,40 @@ bool TyphoonCapture::ForwardNextFrame()
             }
         }
 
-        const unsigned char* audioTransformBuffer(nullptr);
-        uint32_t audioTransformBufferSize(0);
+        bool doCallback(false);
 
-        tie(audioTransformBuffer, audioTransformBufferSize) = 
-            audioTransform_.Transform((const unsigned char*)frameItem.pBufferAudio, frameItem.AudioBufferSize);
-
-        result = captureBuffer_.LockBufferForWrite(videoFrameBuffer, videoBufferSize, audioFrameBuffer, audioTransformBufferSize, 10);
-
-        if(result)
+        // Only pass on a frame if there is valid video - at the start of streaming the compressed video buffer can be null
+        if(videoBuffer != nullptr && videoBufferSize > 0)
         {
-            memcpy_s(videoFrameBuffer, videoBufferSize, videoBuffer, videoBufferSize);
-            memcpy_s(audioFrameBuffer, audioTransformBufferSize, audioTransformBuffer, audioTransformBufferSize);
+            const unsigned char* audioTransformBuffer(nullptr);
+            uint32_t audioTransformBufferSize(0);
 
-            captureBuffer_.ReleaseBufferFromWrite(&freeBuffers);
-        }
-        else
-        {
-            printf("Warning dropping frame from Typhoon as no buffer space\n");
+            tie(audioTransformBuffer, audioTransformBufferSize) = 
+                audioTransform_.Transform((const unsigned char*)frameItem.pBufferAudio, frameItem.AudioBufferSize);
+
+            result = captureBuffer_.LockBufferForWrite(videoFrameBuffer, videoBufferSize, audioFrameBuffer, audioTransformBufferSize, 10);
+
+            if(result)
+            {
+                memcpy_s(videoFrameBuffer, videoBufferSize, videoBuffer, videoBufferSize);
+                memcpy_s(audioFrameBuffer, audioTransformBufferSize, audioTransformBuffer, audioTransformBufferSize);
+
+                captureBuffer_.ReleaseBufferFromWrite(&freeBuffers);
+            }
+            else
+            {
+                printf("Warning dropping frame from Typhoon as no buffer space\n");
+            }
+
+            doCallback = true;
         }
 
         channel_->ReleaseFrame(&frameItem);
 
-        frameCallback_(frameCallbackContext_);
+        if(doCallback)
+        {
+            frameCallback_(frameCallbackContext_);
+        }
 
         if(result)
         {
