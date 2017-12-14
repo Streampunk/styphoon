@@ -13,8 +13,6 @@
   limitations under the License.
 */
 
-/* TODO - add license
-*/
 
 'use strict';
 var os = require('os');

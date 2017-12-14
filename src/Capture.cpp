@@ -13,10 +13,6 @@
   limitations under the License.
 */
 
-/* TODO: add license
-**
-*/
-
 #include <memory>
 #include "Capture.h"
 #include "TyphoonTypeMaps.h"
