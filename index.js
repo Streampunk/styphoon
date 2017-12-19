@@ -641,8 +641,8 @@ var deviceAdapter = {
   formatSampling : formatSampling,
   formatColorimetry : formatColorimetry,
   // access details about the currently connected devices
-  //deviceVersion: native.deviceSdkVersion,
-  //getFirstDevice: native.getFirstDevice,
+  deviceVersion: native.deviceSdkVersion,
+  getFirstDevice: native.getFirstDevice,
   // Raw access to device classes
   Capture : Capture,
   //Playback : Playback

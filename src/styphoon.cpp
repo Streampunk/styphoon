@@ -26,49 +26,58 @@
 #endif
 
 #include "Capture.h"
+#include "TyphoonDevice.h"
 
 using namespace v8;
-
-void PrintSystemInfo()
-{
-//    TODO: Print available Typhoon system info
-}
+using namespace streampunk;
 
 NAN_METHOD(deviceSdkVersion) 
 {
-//  UWord major(0);
-//  UWord minor(0);
-//  UWord point(0);
-//  UWord build(0);
-//
-//  char sdkVer [80];
-//
-//  if(TyphoonDevice::GetDriverVersion(major, minor, point,build))
-//  {
-//    sprintf_s(sdkVer, "Typhoon Driver Version: %d.%d.%d.%d", major, minor, point,build);
-//  }
-//  else
-//  {
-//    sprintf_s(sdkVer, "Typhoon Driver Version: Unavailable - ERROR");
-//  }
-//
-//  info.GetReturnValue().Set(Nan::New(sdkVer).ToLocalChecked());
+  ULONG firmware1(0);
+  ULONG firmware2(0);
+  ULONG driverVersion(0);
+
+  char sdkVer [160];
+
+  if(TyphoonDevice::GetDriverVersion(firmware1, firmware2, driverVersion))
+  {
+    ULONG fw1_1 = (firmware1 & 0xFF00) >> 8;
+    ULONG fw1_2 = (firmware1 & 0xFF);
+    ULONG fw2_1 = (firmware2 & 0xFF00) >> 8;
+    ULONG fw2_2 = (firmware2 & 0xFF);
+    ULONG drv_1 = (driverVersion & 0xFF00) >> 8;
+    ULONG drv_2 = (driverVersion & 0xF0) >> 4;
+    ULONG drv_3 = (driverVersion & 0x0F);
+
+    sprintf_s(sdkVer, "Typhoon SDK Details: fw1=%x.%x fw2=%x.%x driver=%x.%x.%x", 
+              fw1_1,
+              fw1_2,
+              fw2_1,
+              fw2_2,
+              drv_1,
+              drv_2,
+              drv_3);
+  }
+  else
+  {
+    sprintf_s(sdkVer, "Typhoon SDK Details: Unavailable - ERROR");
+  }
+
+  info.GetReturnValue().Set(Nan::New(sdkVer).ToLocalChecked());
 }
 
 NAN_METHOD(getFirstDevice) {
-//  uint32_t numDevices;
-//  uint32_t firstDeviceIndex;
-//  string deviceIdentifier;
-//  uint64_t deviceSerialNumber;
-//
-//  if(AjaDevice::GetFirstDevice(numDevices, &firstDeviceIndex, &deviceIdentifier, &deviceSerialNumber))
-//  {
-//    info.GetReturnValue().Set(Nan::New(deviceIdentifier).ToLocalChecked());
-//  }
-//  else
-//  {
-//    info.GetReturnValue().SetUndefined();
-//  }
+  uint32_t numDevices;
+  uint32_t firstDeviceIndex;
+
+  if(TyphoonDevice::GetFirstDevice(numDevices, &firstDeviceIndex))
+  {
+    info.GetReturnValue().Set(Nan::New<v8::Uint32>(firstDeviceIndex));
+  }
+  else
+  {
+    info.GetReturnValue().SetUndefined();
+  }
 }
 
 

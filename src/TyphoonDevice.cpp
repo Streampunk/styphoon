@@ -32,17 +32,12 @@ mutex TyphoonDevice::protectRefCounts_;
 
 TyphoonDevice::Ref::Ref()
 {
-    {cout << "Creating Typhoon reference at address:" << (uintptr_t)this << endl; }
 }
 
 TyphoonDevice::Ref::~Ref()
 {
-    {cout << "Creating Typhoon reference at address: " << (uintptr_t)this << " reference is: " << (uintptr_t)ref_.get() << endl; }
-
     if (ref_)
     {
-        {cout << "Releasing Typhoon reference at address: " << (uintptr_t)this << " reference is: " << (uintptr_t)ref_.get() << endl; }
-
         Release();
     }
 }
@@ -58,7 +53,6 @@ bool TyphoonDevice::Ref::Initialize(ULONG dwDeviceIndex)
     {
         {cout << "Initializing Typhoon reference at address:" << (uintptr_t)this << " reference is: " << (uintptr_t)ref_.get() << endl; }
         success = TyphoonDevice::AddRef(dwDeviceIndex, ref_);
-        {cout << "Initialized Typhoon reference at address:" << (uintptr_t)this << " reference is: " << (uintptr_t)ref_.get() << endl; }
     }
 
     return success;
@@ -95,15 +89,30 @@ bool TyphoonDevice::GetDriverVersion(ULONG& vFirmware, ULONG& vFirmware2, ULONG&
 {
     bool success(false);
 
-    //CNTV2Card tempCard;
-    //
-    //auto status = CNTV2DeviceScanner::GetFirstDeviceFromArgument("0", tempCard);
-    //
-    //
-    //if(AJA_SUCCESS((int)status))
-    //{
-    //    success = tempCard.GetDriverVersionComponents(major, minor, point, build);
-    //}
+    uint32_t numDevices(0);
+    uint32_t index(0);
+
+    GetFirstDevice(numDevices, &index);
+
+    if(numDevices > 0)
+    {
+        TyphoonDevice::Ref temp;
+
+        if(temp.Initialize(index))
+        {
+            TPH_DEVICE_INFO deviceInfo;
+            memset(&deviceInfo, 0x00, sizeof(deviceInfo));
+
+            if(temp->GetDeviceInfo(&deviceInfo))
+            {
+                vFirmware  = deviceInfo.fw_version;
+                vFirmware2 = deviceInfo.fw2_version;
+                vDriver    = deviceInfo.driver_version;
+
+                success = true;
+            }
+        }
+    }
 
     return success;
 }
@@ -132,14 +141,12 @@ uint32_t TyphoonDevice::GetRefCount(ULONG deviceIndex)
 
 TyphoonDevice::~TyphoonDevice()
 {
-    {cout << "Destroying Typhoon device " << deviceIndex_ << " at address:" << (uintptr_t)this << endl; }
 }
 
 
 TyphoonDevice::TyphoonDevice(ULONG deviceIndex)
 : deviceIndex_(deviceIndex)
 {
-    {cout << "Creating Typhoon device " << deviceIndex_ << " at address:" << (uintptr_t)this << endl; }
 }
 
 
@@ -155,16 +162,12 @@ bool TyphoonDevice::AddRef(ULONG deviceIndex, std::shared_ptr<TyphoonDevice>& re
     // otherwise create and initialize the device
     if (entry != references_.end())
     {
-        {cout << "Adding reference to device " << deviceIndex << endl; }
-
         ref = entry->second;
 
         success = true;
     }
     else
     {
-        {cout << "First initialization of device " << deviceIndex << endl; }
-
         if(deviceIndex < TyphoonBoard::BoardCount())
         {
             shared_ptr<TyphoonDevice> tempRef(new TyphoonDevice(deviceIndex));
