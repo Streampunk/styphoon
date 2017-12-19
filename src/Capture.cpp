@@ -31,10 +31,6 @@ Capture::Capture(uint32_t deviceIndex, uint32_t channelIndex, uint32_t pixelForm
   inputSource_(inputSource),
   compressed_(compressed),
   audioEnabled_(true)
-  //genericPixelFormat_;
-  //nativePixelFormat_
-  //width_;
-  //height_;
 {
   async = new uv_async_t;
   uv_async_init(uv_default_loop(), async, FrameCallback);
@@ -100,13 +96,8 @@ NAN_METHOD(Capture::DeviceInit) {
 NAN_METHOD(Capture::EnableAudio) {
   Capture* obj = ObjectWrap::Unwrap<Capture>(info.Holder());
   HRESULT result;
-  //BMDAudioSampleRate sampleRate = info[0]->IsNumber() ?
-  //    (BMDAudioSampleRate) Nan::To<uint32_t>(info[0]).FromJust() : bmdAudioSampleRate48kHz;
-  //BMDAudioSampleType sampleType = info[1]->IsNumber() ?
-  //    (BMDAudioSampleType) Nan::To<uint32_t>(info[1]).FromJust() : bmdAudioSampleType16bitInteger;
-  //uint32_t channelCount = info[2]->IsNumber() ? Nan::To<uint32_t>(info[2]).FromJust() : 2;
 
-  result = obj->setupAudioInput(/*sampleRate, sampleType, channelCount*/);
+  result = obj->setupAudioInput();
 
   switch (result) {
     case E_INVALIDARG:
@@ -227,14 +218,9 @@ bool Capture::initCapture()
 }
 
 
-HRESULT Capture::setupAudioInput(/*BMDAudioSampleRate sampleRate,
-  BMDAudioSampleType sampleType, uint32_t channelCount*/) {
+HRESULT Capture::setupAudioInput() {
 
   audioEnabled_ = true;
-  // TODO: handle audio properly
-
-  //sampleByteFactor_ = channelCount * (sampleType / 8);
-  //HRESULT result = m_deckLinkInput->EnableAudioInput(sampleRate, sampleType, channelCount);
 
   return S_OK;
 }
@@ -290,27 +276,19 @@ NAUV_WORK_CB(Capture::FrameCallback) {
 
   auto nextFrame = capture->capture_->LockNextFrame(0);
 
-  //printf("** In FrameCallback. Next frame = P(%p)\n", nextFrame);
-
   if (nextFrame != nullptr)
   {
-    //printf("**    Data buffer P(%p) Size(%d)\n", nextFrame->dataBuffer, nextFrame->dataBufferSize);
-    //printf("**    Video buffer P(%p) Size(%d)\n", nextFrame->videoBuffer, nextFrame->videoBufferSize);
-
     if(capture->compressed_ && nextFrame->dataBuffer != nullptr)
     {
-        //printf("Copying data buffer P(%p) Size(%d)\n", nextFrame->dataBuffer, nextFrame->dataBufferSize);
         bv = Nan::CopyBuffer(reinterpret_cast<char*>(nextFrame->dataBuffer), static_cast<uint32_t>(nextFrame->dataBufferSize)).ToLocalChecked();
     }
     else if ((!capture->compressed_) && nextFrame->videoBuffer != nullptr)
     {
-        //printf("Copying video buffer P(%p) Size(%d)\n", nextFrame->videoBuffer, nextFrame->videoBufferSize);
         bv = Nan::CopyBuffer(reinterpret_cast<char*>(nextFrame->videoBuffer), static_cast<uint32_t>(nextFrame->videoBufferSize)).ToLocalChecked();
     }
 
     if (nextFrame->audioBuffer != nullptr && capture->audioEnabled_ == true)
     {
-        //printf("Copying audio buffer P(%p) Size(%d)\n", nextFrame->audioBuffer, nextFrame->audioBufferSize);
         ba = Nan::CopyBuffer(reinterpret_cast<char*>(nextFrame->audioBuffer), static_cast<uint32_t>(nextFrame->audioBufferSize)).ToLocalChecked();
     }
 

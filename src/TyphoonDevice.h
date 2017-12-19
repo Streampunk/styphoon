@@ -25,7 +25,7 @@
 
 namespace streampunk {
 
-// Class to manage the reservation and release of AJA devices between multiple nodes
+// Class to manage the reservation and release of Typhoon devices between multiple nodes
 class TyphoonDevice 
 {
 // Constants
@@ -79,10 +79,10 @@ public:
     // Test function - shouldn't be needed in production code
     static uint32_t GetRefCount(ULONG deviceIndex);
 
-    // Overrideable factory function for creating the underlying CNTV2Card class
+    // Overrideable factory function for creating the underlying TyphoonBoard class
     static TyphoonBoard_Factory typhoonBoard_Factory;
 
-    // default CNTV2Card factory function
+    // default TyphoonBoard factory function
     static TyphoonBoard* DefaultTyphoonBoardFactory(void) { return new TyphoonBoard(); }
 
     virtual ~TyphoonDevice();

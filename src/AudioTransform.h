@@ -77,7 +77,6 @@ public:
                 int sample = *(int *)leftChannelBuffer;
 
                 sample = (sample & 0xFF000000) >> 24 | (sample & 0x00FF0000) >> 8 | (sample & 0x0000FF00) << 8 | (sample & 0x000000FF) << 24;
-//                sample = (sample & 0xFF000000) >> 16 | (sample & 0x00FF0000) >> 16;
                 int sample16 = (sample) & 0x0000FFFF;
                 memcpy_s(&outputBuffer[outputBufferIdx], MAX_BUFFER_SIZE - outputBufferIdx, (void *)&sample16, 2);
 
@@ -87,7 +86,6 @@ public:
                 // Accumulate channel R and write to file
                 sample = *(int *)rightChannelBuffer;
                 sample = (sample & 0xFF000000) >> 24 | (sample & 0x00FF0000) >> 8 | (sample & 0x0000FF00) << 8 | (sample & 0x000000FF) << 24;
-//                sample = (sample & 0xFF000000) >> 16 | (sample & 0x00FF0000) >> 16;
                 sample16 = (sample) & 0x0000FFFF;
                 memcpy_s(&outputBuffer[outputBufferIdx], MAX_BUFFER_SIZE - outputBufferIdx, (void *)&sample16, 2);
 

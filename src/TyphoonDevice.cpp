@@ -111,22 +111,7 @@ bool TyphoonDevice::GetDriverVersion(ULONG& vFirmware, ULONG& vFirmware2, ULONG&
 
 void TyphoonDevice::DumpDeviceInfo()
 {
-    //assert(deviceScanner_);
-    //
-    //cout << "AJA Device Info: " << endl;
-    //
-    //auto deviceInfoList = deviceScanner_->GetDeviceInfoList();
-    //auto itDevices = deviceInfoList.begin();
-    //
-    //while(itDevices != deviceInfoList.end())
-    //{
-    //    cout << "DeviceId:             " << itDevices->deviceID << endl;
-    //    cout << "Device Index:         " << itDevices->deviceIndex << endl;
-    //    cout << "Device Serial Number: " << itDevices->deviceSerialNumber << endl;
-    //    cout << "Device Identifier:    " << itDevices->deviceIdentifier << endl;
-    //
-    //    ++itDevices;
-    //}
+    //TODO: Dump information about all available devices
 }
 
 

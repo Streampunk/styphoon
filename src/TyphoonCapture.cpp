@@ -13,9 +13,6 @@
   limitations under the License.
 */
 
-// CompressData.cpp : Defines the entry point for the console application.
-//
-
 #include "targetver.h"
 
 #include <tchar.h>
@@ -251,7 +248,6 @@ void TyphoonCapture::CaptureThreadProc()
     {
         printf("**** Setting compressed video\n");
         dmaFlags = TPH_FLAG_AUDIO | TPH_FLAG_DATA | TPH_FLAG_VIDEO;
-//        dmaFlags = TPH_FLAG_DATA;
     }
     else
     {
@@ -265,15 +261,6 @@ void TyphoonCapture::CaptureThreadProc()
            config_.FrameFormat,
            config_.Source);
 
-    //ULONG frameFormat(TPH_DSG4_REGWRITE_V210);
-    //
-    //if(config_.FrameFormat == TPH_UYVY)
-    //{
-    //    frameFormat = TPH_DSG4_REGWRITE_UYVY;
-    //}
-    //
-    //bool setFrameFormat = TyphoonRegister::Write(*board_, TyphoonRegister::FrameFormat, channelId_, frameFormat);
-    
     bool openedChannel = static_cast<bool>(channel_->Open(
         config_.SignalStandard, 
         dmaFlags, 
@@ -293,7 +280,6 @@ void TyphoonCapture::CaptureThreadProc()
     else
     {
         ULONG frameFormat(TPH_DSG4_REGWRITE_V210);
-        //ULONG frameFormat(TPH_DSG4_REGWRITE_UYVY);
 
         if(config_.FrameFormat == TPH_UYVY)
         {

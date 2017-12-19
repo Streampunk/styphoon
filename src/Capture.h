@@ -43,11 +43,10 @@ private:
   uv_async_t *async;
   uv_mutex_t padlock;
 
-  // setup the AJA Kona interface (video standard, pixel format, callback object, ...)
+  // setup the CoreEl Typhoon interface (video standard, pixel format, callback object, ...)
   bool initCapture();
 
-  HRESULT setupAudioInput(/*BMDAudioSampleRate sampleRate, BMDAudioSampleType sampleType,
-    uint32_t channelCount*/);
+  HRESULT setupAudioInput();
 
   bool initInput();
 
@@ -58,9 +57,6 @@ private:
 
   uint32_t GetDisplayMode();
 
-  // init() must be called after the constructor.
-  // if init() fails, call the destructor
-  //bool            init();
   static NAN_METHOD(DeviceInit);
 
   // start the capture operation. returns when the operation has completed
@@ -92,8 +88,6 @@ public:
 
   void frameArrived();
   static void _frameArrived(void* context);
-
-  //static const NTV2FrameBufferFormat defaultPixelFormat_ = NTV2_FBF_10BIT_YCBCR;
 };
 
 } // namespace streampunk

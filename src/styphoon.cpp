@@ -13,9 +13,6 @@
   limitations under the License.
 */
 
-/* TODO - Add license
-*/
-
 #define _WINSOCKAPI_
 
 #include <node.h>
@@ -26,30 +23,15 @@
 #ifdef WIN32
 #include <tchar.h>
 #include <conio.h>
-#include <objbase.h>        // Necessary for COM
-#include <comdef.h>
 #endif
 
 #include "Capture.h"
-//#include "Playback.h"
 
 using namespace v8;
 
 void PrintSystemInfo()
 {
-//    cout << "AJA Device System Info:" << endl;
-//    AJASystemInfo info;
-//
-//    for(uint32_t tag = 0; tag < (uint32_t)AJA_SystemInfoTag_LAST; tag++)
-//    {
-//        string label;
-//        string value;
-//
-//        info.GetLabel(static_cast<AJASystemInfoTag>(tag), label);
-//        info.GetValue(static_cast<AJASystemInfoTag>(tag), value);
-//        
-//        cout << "    " << label << ": " << value << endl;
-//    }
+//    TODO: Print available Typhoon system info
 }
 
 NAN_METHOD(deviceSdkVersion) 
@@ -61,13 +43,13 @@ NAN_METHOD(deviceSdkVersion)
 //
 //  char sdkVer [80];
 //
-//  if(AjaDevice::GetDriverVersion(major, minor, point,build))
+//  if(TyphoonDevice::GetDriverVersion(major, minor, point,build))
 //  {
-//    sprintf_s(sdkVer, "Aja Driver Version: %d.%d.%d.%d", major, minor, point,build);
+//    sprintf_s(sdkVer, "Typhoon Driver Version: %d.%d.%d.%d", major, minor, point,build);
 //  }
 //  else
 //  {
-//    sprintf_s(sdkVer, "Aja Driver Version: Unavailable - ERROR");
+//    sprintf_s(sdkVer, "Typhoon Driver Version: Unavailable - ERROR");
 //  }
 //
 //  info.GetReturnValue().Set(Nan::New(sdkVer).ToLocalChecked());
@@ -90,30 +72,9 @@ NAN_METHOD(getFirstDevice) {
 }
 
 
-
-/* static Local<Object> makeBuffer(char* data, size_t size) {
-  HandleScope scope;
-
-  // It ends up being kind of a pain to convert a slow buffer into a fast
-  // one since the fast part is implemented in JavaScript.
-  Local<Buffer> slowBuffer = Buffer::New(data, size);
-  // First get the Buffer from global scope...
-  Local<Object> global = Context::GetCurrent()->Global();
-  Local<Value> bv = global->Get(String::NewSymbol("Buffer"));
-  assert(bv->IsFunction());
-  Local<Function> b = Local<Function>::Cast(bv);
-  // ...call Buffer() with the slow buffer and get a fast buffer back...
-  Handle<Value> argv[3] = { slowBuffer->handle_, Integer::New(size), Integer::New(0) };
-  Local<Object> fastBuffer = b->NewInstance(3, argv);
-
-  return scope.Close(fastBuffer);
-} */
-
 NAN_MODULE_INIT(Init) {
   Nan::Export(target, "deviceSdkVersion", deviceSdkVersion);
   Nan::Export(target, "getFirstDevice", getFirstDevice);
-  streampunk::Capture::Init(target);
-//  streampunk::Playback::Init(target);
   streampunk::Capture::Init(target);
 }
 
